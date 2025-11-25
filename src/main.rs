@@ -12,6 +12,7 @@ mod server;
 mod bench;
 mod file;
 mod fts;
+mod mcp;
 
 use anyhow::Result;
 use tracing::info;

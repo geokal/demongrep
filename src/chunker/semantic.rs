@@ -1,4 +1,4 @@
-use super::{Chunk, ChunkKind, Chunker};
+use super::{Chunk, ChunkKind, Chunker, DEFAULT_CONTEXT_LINES};
 use crate::chunker::extractor::{get_extractor, LanguageExtractor};
 use crate::chunker::parser::CodeParser;
 use crate::file::Language;
@@ -12,6 +12,7 @@ pub struct SemanticChunker {
     max_chunk_lines: usize,
     max_chunk_chars: usize,
     overlap_lines: usize,
+    context_lines: usize,
 }
 
 impl SemanticChunker {
@@ -21,7 +22,14 @@ impl SemanticChunker {
             max_chunk_lines,
             max_chunk_chars,
             overlap_lines,
+            context_lines: DEFAULT_CONTEXT_LINES,
         }
+    }
+
+    /// Set the number of context lines to extract before/after each chunk
+    pub fn with_context_lines(mut self, lines: usize) -> Self {
+        self.context_lines = lines;
+        self
     }
 
     /// Chunk a file using semantic analysis
@@ -65,13 +73,50 @@ impl SemanticChunker {
         all_chunks.extend(gap_chunks);
         all_chunks.sort_by_key(|c| c.start_line);
 
-        // 6. Split oversized chunks
+        // 6. Populate context windows (lines before/after each chunk)
+        let source_lines: Vec<&str> = content.lines().collect();
+        self.populate_context_windows(&mut all_chunks, &source_lines);
+
+        // 7. Split oversized chunks
         let final_chunks = all_chunks
             .into_iter()
             .flat_map(|c| self.split_if_needed(c))
             .collect();
 
         Ok(final_chunks)
+    }
+
+    /// Populate context_prev and context_next for each chunk
+    fn populate_context_windows(&self, chunks: &mut [Chunk], source_lines: &[&str]) {
+        let total_lines = source_lines.len();
+
+        for chunk in chunks.iter_mut() {
+            // Extract context_prev (N lines before start_line)
+            if chunk.start_line > 0 && self.context_lines > 0 {
+                let prev_start = chunk.start_line.saturating_sub(self.context_lines);
+                let prev_end = chunk.start_line;
+                if prev_start < prev_end && prev_end <= total_lines {
+                    let prev_lines = &source_lines[prev_start..prev_end];
+                    let prev_content = prev_lines.join("\n");
+                    if !prev_content.trim().is_empty() {
+                        chunk.context_prev = Some(prev_content);
+                    }
+                }
+            }
+
+            // Extract context_next (N lines after end_line)
+            if chunk.end_line < total_lines && self.context_lines > 0 {
+                let next_start = chunk.end_line;
+                let next_end = (chunk.end_line + self.context_lines).min(total_lines);
+                if next_start < next_end {
+                    let next_lines = &source_lines[next_start..next_end];
+                    let next_content = next_lines.join("\n");
+                    if !next_content.trim().is_empty() {
+                        chunk.context_next = Some(next_content);
+                    }
+                }
+            }
+        }
     }
 
     /// Recursively visit AST nodes and extract chunks

@@ -136,6 +136,12 @@ pub enum Commands {
         #[arg(long)]
         model: Option<String>,
     },
+
+    /// Start MCP server for Claude Code integration
+    Mcp {
+        /// Path to project (defaults to current directory)
+        path: Option<PathBuf>,
+    },
 }
 
 pub async fn run() -> Result<()> {
@@ -196,6 +202,7 @@ pub async fn run() -> Result<()> {
         Commands::Clear { path, yes } => crate::index::clear(path, yes).await,
         Commands::Doctor => crate::cli::doctor::run().await,
         Commands::Setup { model } => crate::cli::setup::run(model).await,
+        Commands::Mcp { path } => crate::mcp::run_mcp_server(path).await,
     }
 }
 

@@ -2,20 +2,6 @@
 
 Features planned to achieve parity with osgrep and beyond.
 
-## High Priority
-
-### Claude Code Integration
-MCP server for direct integration with Claude Code.
-
-- [ ] Implement MCP (Model Context Protocol) server
-- [ ] `demongrep mcp` command to start MCP server
-- [ ] Tool: `semantic_search(query, limit)` - search codebase
-- [ ] Tool: `get_file_chunks(path)` - get all chunks from a file
-- [ ] Tool: `index_status()` - check index health
-- [ ] Auto-discovery of `.demongrep.db` in project
-
-**Why**: Enable Claude to use semantic code search during conversations.
-
 ## Medium Priority
 
 ### Server Authentication
@@ -34,14 +20,6 @@ Project-specific ignore patterns.
 - [ ] Glob patterns: `*.test.ts`, `**/fixtures/**`
 - [ ] Negation patterns: `!important.test.ts`
 - [ ] Comment lines starting with `#`
-
-### Context Windows
-Include surrounding code for better understanding.
-
-- [ ] Add `context_prev` and `context_next` fields to chunks
-- [ ] Configurable context size (lines or tokens)
-- [ ] Include in search results
-- [ ] Useful for LLM consumption
 
 ## Low Priority
 
@@ -141,3 +119,14 @@ Anonymous usage statistics.
   - `--rerank` flag enables second-pass reranking
   - `--rerank-top N` controls how many results to rerank (default 50)
   - Score blending: 57.5% rerank + 42.5% RRF
+- [x] Context Windows - Surrounding code context for each chunk
+  - `context_prev` and `context_next` fields added to chunks
+  - Default 3 lines before/after each chunk
+  - Displayed in search results with `--content` flag
+  - Stored in vector database metadata
+- [x] MCP Server - Claude Code Integration
+  - `demongrep mcp [path]` command starts MCP server via stdio
+  - Tool: `semantic_search(query, limit)` - semantic code search
+  - Tool: `get_file_chunks(path)` - get all chunks from a file
+  - Tool: `index_status()` - check index health and stats
+  - Uses rmcp crate (official Rust MCP SDK)

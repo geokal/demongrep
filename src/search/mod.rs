@@ -398,12 +398,28 @@ fn print_result(
 
     // Show content if requested
     if show_content {
+        // Show context before (if available)
+        if let Some(ctx_prev) = &result.context_prev {
+            println!("\n   {}:", "Context (before)".dimmed());
+            for line in ctx_prev.lines() {
+                println!("   │ {}", line.bright_black());
+            }
+        }
+
         println!("\n   {}:", "Content".bright_yellow());
         for line in result.content.lines().take(10) {
             println!("   │ {}", line.dimmed());
         }
         if result.content.lines().count() > 10 {
             println!("   │ {}", "...".dimmed());
+        }
+
+        // Show context after (if available)
+        if let Some(ctx_next) = &result.context_next {
+            println!("\n   {}:", "Context (after)".dimmed());
+            for line in ctx_next.lines() {
+                println!("   │ {}", line.bright_black());
+            }
         }
     } else {
         // Show a snippet

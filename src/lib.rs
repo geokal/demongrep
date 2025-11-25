@@ -11,6 +11,7 @@ pub mod server;
 pub mod bench;
 pub mod file;
 pub mod fts;
+pub mod mcp;
 
 // Re-export commonly used types
 pub use config::Config;

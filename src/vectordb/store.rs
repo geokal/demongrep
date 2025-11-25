@@ -23,6 +23,12 @@ pub struct ChunkMetadata {
     pub docstring: Option<String>,
     pub context: Option<String>,
     pub hash: String,
+    /// Lines of code immediately before this chunk (for context)
+    #[serde(default)]
+    pub context_prev: Option<String>,
+    /// Lines of code immediately after this chunk (for context)
+    #[serde(default)]
+    pub context_next: Option<String>,
 }
 
 impl ChunkMetadata {
@@ -41,6 +47,8 @@ impl ChunkMetadata {
                 Some(chunk.chunk.context.join(" > "))
             },
             hash: chunk.chunk.hash.clone(),
+            context_prev: chunk.chunk.context_prev.clone(),
+            context_next: chunk.chunk.context_next.clone(),
         }
     }
 }
@@ -238,6 +246,8 @@ impl VectorStore {
                     hash: metadata.hash,
                     distance,
                     score: 1.0 - distance, // Convert distance to similarity score
+                    context_prev: metadata.context_prev,
+                    context_next: metadata.context_next,
                 });
             }
         }
@@ -402,6 +412,8 @@ impl VectorStore {
                 hash: meta.hash,
                 distance: 0.0,
                 score: 0.0, // Will be set by caller
+                context_prev: meta.context_prev,
+                context_next: meta.context_next,
             }))
         } else {
             Ok(None)
@@ -435,6 +447,10 @@ pub struct SearchResult {
     pub hash: String,
     pub distance: f32,
     pub score: f32, // 1.0 - distance (higher is better)
+    /// Lines of code immediately before this chunk (for context)
+    pub context_prev: Option<String>,
+    /// Lines of code immediately after this chunk (for context)
+    pub context_next: Option<String>,
 }
 
 /// Statistics about the vector store

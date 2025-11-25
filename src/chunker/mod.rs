@@ -16,6 +16,9 @@ pub use tree_sitter::TreeSitterChunker;
 pub use dedup::ChunkDeduplicator;
 pub use semantic::SemanticChunker;
 
+/// Default number of context lines before/after a chunk
+pub const DEFAULT_CONTEXT_LINES: usize = 3;
+
 /// Represents a chunk of code with metadata
 #[derive(Debug, Clone)]
 pub struct Chunk {
@@ -52,6 +55,12 @@ pub struct Chunk {
 
     /// Content hash for deduplication
     pub hash: String,
+
+    /// Lines of code immediately before this chunk (for context)
+    pub context_prev: Option<String>,
+
+    /// Lines of code immediately after this chunk (for context)
+    pub context_next: Option<String>,
 }
 
 impl Chunk {
@@ -77,6 +86,8 @@ impl Chunk {
             is_complete: true,
             split_index: None,
             hash,
+            context_prev: None,
+            context_next: None,
         }
     }
 
