@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Result};
 use colored::Colorize;
+use serde::Serialize;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
@@ -10,6 +11,40 @@ use crate::file::FileWalker;
 use crate::fts::FtsStore;
 use crate::rerank::{rrf_fusion, vector_only, FusedResult, NeuralReranker, DEFAULT_RRF_K};
 use crate::vectordb::VectorStore;
+
+/// JSON output format for search results
+#[derive(Serialize)]
+struct JsonOutput {
+    query: String,
+    results: Vec<JsonResult>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    timing: Option<JsonTiming>,
+}
+
+#[derive(Serialize)]
+struct JsonResult {
+    path: String,
+    start_line: usize,
+    end_line: usize,
+    kind: String,
+    content: String,
+    score: f32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    signature: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    context_prev: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    context_next: Option<String>,
+}
+
+#[derive(Serialize)]
+struct JsonTiming {
+    total_ms: u64,
+    embed_ms: u64,
+    search_ms: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    rerank_ms: Option<u64>,
+}
 
 /// Get the database path for a given project directory
 fn get_db_path(path: Option<PathBuf>) -> Result<PathBuf> {
@@ -44,6 +79,7 @@ pub async fn search(
     sync: bool,
     json: bool,
     path: Option<PathBuf>,
+    filter_path: Option<String>,
     model_override: Option<ModelType>,
     vector_only_mode: bool,
     rrf_k: f32,
@@ -185,13 +221,53 @@ pub async fn search(
         rerank_duration = start.elapsed();
     }
 
-    // Truncate to max_results after reranking
+    // Filter by path if specified
+    if let Some(ref filter) = filter_path {
+        let filter_normalized = filter.trim_start_matches("./");
+        results.retain(|r| {
+            let path_normalized = r.path.trim_start_matches("./");
+            path_normalized.starts_with(filter_normalized)
+        });
+    }
+
+    // Truncate to max_results after reranking and filtering
     results.truncate(max_results);
 
     // Output results
     if json {
-        // TODO: Implement JSON output
-        println!("JSON output not implemented yet");
+        let json_results: Vec<JsonResult> = results
+            .iter()
+            .map(|r| JsonResult {
+                path: r.path.clone(),
+                start_line: r.start_line,
+                end_line: r.end_line,
+                kind: r.kind.clone(),
+                content: r.content.clone(),
+                score: r.score,
+                signature: r.signature.clone(),
+                context_prev: r.context_prev.clone(),
+                context_next: r.context_next.clone(),
+            })
+            .collect();
+
+        let timing = if scores {
+            Some(JsonTiming {
+                total_ms: (load_duration + model_load_duration + embed_duration + search_duration + rerank_duration).as_millis() as u64,
+                embed_ms: embed_duration.as_millis() as u64,
+                search_ms: search_duration.as_millis() as u64,
+                rerank_ms: if rerank { Some(rerank_duration.as_millis() as u64) } else { None },
+            })
+        } else {
+            None
+        };
+
+        let output = JsonOutput {
+            query: query.to_string(),
+            results: json_results,
+            timing,
+        };
+
+        println!("{}", serde_json::to_string(&output)?);
         return Ok(());
     }
 

@@ -82,6 +82,10 @@ pub enum Commands {
         /// Number of top results to rerank (default 50)
         #[arg(long, default_value = "50")]
         rerank_top: usize,
+
+        /// Filter results to files under this path (e.g., "src/")
+        #[arg(long)]
+        filter_path: Option<String>,
     },
 
     /// Index the repository
@@ -172,6 +176,7 @@ pub async fn run() -> Result<()> {
             rrf_k,
             rerank,
             rerank_top,
+            filter_path,
         } => {
             crate::search::search(
                 &query,
@@ -183,6 +188,7 @@ pub async fn run() -> Result<()> {
                 sync,
                 json,
                 path,
+                filter_path,
                 model_type,
                 vector_only,
                 rrf_k,

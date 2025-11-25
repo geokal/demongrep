@@ -52,14 +52,6 @@ Extend tree-sitter support.
 - [ ] Swift (tree-sitter-swift)
 - [ ] Kotlin (tree-sitter-kotlin)
 
-### JSON Output Mode
-Structured output for scripting.
-
-- [ ] `--json` flag for all commands
-- [ ] Machine-readable search results
-- [ ] Consistent JSON schema
-- [ ] Include all metadata (scores, chunks, timing)
-
 ### Parallel Embedding
 Multi-threaded embedding for faster indexing.
 
@@ -130,3 +122,10 @@ Anonymous usage statistics.
   - Tool: `get_file_chunks(path)` - get all chunks from a file
   - Tool: `index_status()` - check index health and stats
   - Uses rmcp crate (official Rust MCP SDK)
+- [x] JSON Output Mode - Structured output for scripting/agents
+  - `--json` flag for search command
+  - Machine-readable results with all metadata
+  - Timing info included when `--scores` is also used
+- [x] Path Filtering - Limit search to subdirectory
+  - `--filter-path src/` to only search files under `src/`
+  - Applied after search/rerank for efficient filtering
