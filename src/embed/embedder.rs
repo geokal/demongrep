@@ -226,7 +226,6 @@ impl FastEmbedder {
                 .with_show_download_progress(true),
         )
         .map_err(|e| anyhow!("Failed to initialize embedding model: {}", e))?;
-
         info_print!("✅ Model loaded successfully!");
         Ok(Self { model, model_type })
     }
@@ -268,7 +267,6 @@ impl FastEmbedder {
                 .model
                 .embed(text_refs, None)
                 .map_err(|e| anyhow!("Failed to generate embeddings: {}", e))?;
-
             all_embeddings.extend(embeddings);
         }
 

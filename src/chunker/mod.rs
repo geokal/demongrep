@@ -57,7 +57,6 @@ pub struct Chunk {
 
     /// Lines of code immediately after this chunk (for context)
     pub context_next: Option<String>,
-
     /// Extracted string literals for better search (e.g., "API-VERSION", "2")
     pub string_literals: Vec<String>,
 }
