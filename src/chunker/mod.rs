@@ -11,8 +11,6 @@ mod extractor;
 mod semantic;
 
 pub use semantic::SemanticChunker;
-pub use parser::{CodeParser, ParsedCode};
-pub use grammar::{GrammarManager, GrammarStats};
 
 /// Default number of context lines before/after a chunk
 pub const DEFAULT_CONTEXT_LINES: usize = 3;
@@ -105,12 +103,12 @@ impl Chunk {
         self.hash == other.hash
     }
 
-    /// Get the number of lines in this chunk
+    /// Get number of lines in this chunk
     pub fn line_count(&self) -> usize {
         self.end_line.saturating_sub(self.start_line)
     }
 
-    /// Get the size of this chunk in bytes
+    /// Get size of this chunk in bytes
     pub fn size_bytes(&self) -> usize {
         self.content.len()
     }

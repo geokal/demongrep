@@ -1,7 +1,7 @@
 use crate::info_print;
 use anyhow::{anyhow, Result};
 use fastembed::{EmbeddingModel as FastEmbedModel, InitOptions, TextEmbedding};
-use ort::execution_providers::CPUExecutionProvider;
+// use ort::execution_providers::CPUExecutionProvider;
 
 /// Available embedding models
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -129,7 +129,7 @@ impl ModelType {
         )
     }
 
-    /// Get a short identifier for the model (for filenames, etc.)
+    /// Get a short identifier for model (for filenames, etc.)
     pub fn short_name(&self) -> &'static str {
         match self {
             Self::AllMiniLML6V2 => "minilm-l6",
@@ -221,22 +221,16 @@ impl FastEmbedder {
         info_print!("📦 Loading embedding model: {}", model_type.name());
         info_print!("   Dimensions: {}", model_type.dimensions());
 
-        // Use CPU execution provider with arena allocator for better memory performance
-        let cpu_ep = CPUExecutionProvider::default()
-            .with_arena_allocator(true)
-            .build();
-
         let model = TextEmbedding::try_new(
             InitOptions::new(model_type.to_fastembed_model())
-                .with_show_download_progress(true)
-                .with_execution_providers(vec![cpu_ep])
+                .with_show_download_progress(true),
         )
-            .map_err(|e| anyhow!("Failed to initialize embedding model: {}", e))?;
+        .map_err(|e| anyhow!("Failed to initialize embedding model: {}", e))?;
 
         info_print!("✅ Model loaded successfully!");
-
         Ok(Self { model, model_type })
     }
+
 
     /// Embed a batch of texts (processes in mini-batches to avoid OOM)
     /// Uses adaptive batch size based on model dimensions
@@ -290,17 +284,17 @@ impl FastEmbedder {
             .ok_or_else(|| anyhow!("No embedding generated"))
     }
 
-    /// Get the dimensionality of embeddings
+    /// Get dimensionality of embeddings
     pub fn dimensions(&self) -> usize {
         self.model_type.dimensions()
     }
 
-    /// Get the model name
+    /// Get model name
     pub fn model_name(&self) -> &str {
         self.model_type.name()
     }
 
-    /// Get the model type
+    /// Get model type
     pub fn model_type(&self) -> ModelType {
         self.model_type
     }
